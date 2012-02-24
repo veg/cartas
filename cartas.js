@@ -11,17 +11,13 @@ var options = {
 };
 var countries = [];
 
-function hmean(vals) {
-    var r = 0;
-    for (var i = 0; i < vals.length; i++) {
-        if (vals[i] == 0)
-            return 0;
-        else
-            r = r + ( 1.0 / vals[i] );
-    }
-    if (r > 0)
-        return Math.round( vals.length / r );
-    else
+function min(vals) {
+    if (vals.length > 0) {
+        var m = vals[0];
+        for (var i = 1; i < vals.length; i++)
+            m = vals[i] < m ? vals[i] : m;
+        return m;
+    } else
         return 0;
 }
 
@@ -57,7 +53,7 @@ function drawChart(abs) {
         var vals = [];
         for (var j = 0; j < abs.length; j++)
             vals.push(countrydata[countries[i]][abs[j]]);
-        data.setValue(i, 1, hmean(vals));
+        data.setValue(i, 1, min(vals));
     }
     formatter.format(data, 1);
     chart.draw(data, options);
