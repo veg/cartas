@@ -2,7 +2,7 @@ google.setOnLoadCallback(initChart);
 
 var chart, data, form, formatter;
 var options = {
-    backgroundColor: '#eee',
+    backgroundColor: "#eee",
     colorAxis: {
         colors: ["green", "yellow", "red"],
         maxValue: 100.0,
@@ -35,7 +35,7 @@ function initChart() {
 
     chart = new window.google.visualization.GeoChart(document.getElementById("chart"));
     data = new window.google.visualization.DataTable();
-    form = document.getElementById('form');
+    form = document.getElementById("form");
     formatter = new window.google.visualization.NumberFormat({fractionDigits: 0, suffix:"%"});
 
     data.addColumn("string", "Country");
@@ -46,6 +46,13 @@ function initChart() {
 };
 
 function drawChart(abs) {
+    if (typeof(abs) == "undefined") {
+        abs = [];
+        for (var i = 0; i < form.elements.length; i++)
+            if (form.elements[i].type == "checkbox")
+                if (form.elements[i].checked)
+                    abs.push(form.elements[i].value);
+    }
     for (var i = 0; i < countries.length; i++) {
         var vals = [];
         for (var j = 0; j < abs.length; j++)
@@ -57,7 +64,7 @@ function drawChart(abs) {
 }
 
 $(document).ready(function() {
-    $('#selector').height($(window).height() - 102);
+    $("#selector").height($(window).height() - 102);
 
     var abset = {};
     for (var country in countrydata)
@@ -65,27 +72,33 @@ $(document).ready(function() {
             abset[ab] = 0;
     var antibodies = [];
     for (var ab in abset)
-        if (ab !== '#')
+        if (ab !== "#")
             antibodies.push(ab);
     antibodies = antibodies.sort();
     delete abset;
 
     var checkboxes = [];
     for (var i = 0; i < antibodies.length; i++)
-        checkboxes.push('<div><input class="antibody" type="checkbox" name="antibody" value="' + antibodies[i] + '" />' + antibodies[i] + '</div>');
+        checkboxes.push('<div class="antibody"><input type="checkbox" name="antibody" value="' + antibodies[i] + '" />' + antibodies[i] + '</div>');
     $("#form").html(checkboxes.join(""));
 
+    $(".antibody > input").change(
+        function() {
+            drawChart();
+        }
+    ).click(
+        function(ev) {
+            ev.stopPropagation();
+        }
+    );
+
     $(".antibody").click(function() {
-        var abs = [];
-        for (var i = 0; i < form.elements.length; i++)
-            if (form.elements[i].type == "checkbox")
-                if (form.elements[i].checked == true)
-                    abs.push(form.elements[i].value);
-        drawChart(abs);
+        var box = $(this).find(":checkbox");
+        box.prop("checked", !box.is(":checked")).change();
     });
 
     $(window).resize(function() {
-        $('#selector').height($(window).height() - 102);
+        $("#selector").height($(window).height() - 102);
     });
 
     $("#clearall").click(function() {
