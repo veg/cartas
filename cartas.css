@@ -15,28 +15,34 @@ body {
     padding: 10px;
     width: 1145px;
 }
-div#navbar {
+#navbar {
     float: left;
 }
-#navbar div {
+#chart {
+    float: right;
+    height: 500px;
+    margin: 10px;
+    width: 900px;
+}
+.antibody, #navtitle, #clearall {
     background: rgba(0, 0, 0, 0.03);
     clear: both;
     padding: 10px;
     text-align: center;
 }
-#navbar div + div {
-    margin-top: 1px;
-}
-div#navtitle {
+#navtitle {
     background: rgba(0, 0, 0, 0.05);
     color: #09c;
     font-weight: 500;
     text-transform: uppercase;
 }
-div#clearall {
+#navtitle + #clearall, #clearall + #selector, .antibody + .antibody {
+    margin-top: 1px;
+}
+#clearall {
     text-transform: uppercase;
 }
-div#selector {
+#selector {
     background: none;
     height: 500px;
     margin: 0;
@@ -45,18 +51,12 @@ div#selector {
     padding: 0;
     width: 225px;
 }
-#form div {
+.antibody {
     text-align: left;
 }
-#form div:hover, div#clearall:hover {
+.antibody:hover, #clearall:hover {
     background: rgba(0, 0, 0, 0.05);
 }
-#form input {
+.antibody input {
     margin-right: 5px;
-}
-#chart {
-    float: right;
-    height: 500px;
-    margin: 10px;
-    width: 900px;
 }

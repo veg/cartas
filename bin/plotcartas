@@ -1,0 +1,147 @@
+#!/usr/bin/env python3.2
+
+import sys
+
+import matplotlib as mpl
+mpl.use('pdf')
+
+import matplotlib.pyplot as plt
+
+import numpy as np
+
+from collections import namedtuple
+from re import search as re_search, I as re_I
+from warnings import warn
+
+from matplotlib.cm import ScalarMappable
+from matplotlib.colors import LinearSegmentedColormap, Normalize
+
+from countrymap import CountryMap, alphas, colors, enclaves, linewidths
+
+from cartas import collate_countrydata
+
+
+def main(args=None):
+    if args is None:
+        args = sys.argv[1:]
+
+    try:
+        assert(len(args) >= 2)
+        pdffile = args.pop(-1)
+        antibodies = args.pop(-1).split(',')
+        path = args.pop(-1).rstrip('/')
+        assert(len(args) == 0)
+    except:
+        print('usage: plotcartas PATH_TO_PREDICTIONFILES ANTIBODIES OUTPUTPDF')
+        return -1
+
+    # turn the antibodies into regexs
+    antibodies = ['^' + ab if ab[ 0] != '^' else ab for ab in antibodies]
+    antibodies = [ab + '$' if ab[-1] != '$' else ab for ab in antibodies]
+
+    plt.figure(figsize=(12, 12))
+
+    cm = CountryMap(
+        projection='merc',
+        llcrnrlon=-180.,
+        llcrnrlat= -56.75,
+        urcrnrlon= 180.,
+        urcrnrlat=  84.,
+    )
+
+    # make the figure axes transparent
+    ax = plt.gca()
+    ax.patch.set_alpha(0.)
+
+    cm.drawmapboundary(
+        linewidth=0.
+    )
+
+    lines = cm.drawcoastlines(
+        color='#000000',
+        linewidth=0.5,
+        zorder=20
+    )
+    # lines.set_alpha(0.5)
+
+    lines = cm.drawcountries(
+        color='#000000',
+        linewidth=0.5,
+        zorder=20
+    )
+    # lines.set_alpha(0.5)
+
+    cm.fillcontinents(
+        color='#F5F5F5',
+        lake_color=(0., 0., 0., 0.)
+    )
+
+    country_kwargs = {
+        'linewidth': 0.
+    }
+
+    countrydata = collate_countrydata(path, iso2=True)
+
+    colors = ['#008000', '#FFFF00', '#F10300']
+    cmap = LinearSegmentedColormap.from_list('GreenYellowRed', colors, N=256, gamma=1.0)
+
+    mappable = ScalarMappable(cmap=cmap, norm=Normalize(0, 100, clip=True))
+    mappable.set_array(np.arange(101))
+
+    numresist = 0
+    for country, data in countrydata.items():
+        vals = np.ones((data['#'],), dtype=bool)
+        for regex in antibodies:
+            for ab, vs in data.items():
+                if re_search(regex, ab, re_I):
+                    vals = np.min(np.vstack((vals, vs)), axis=0)
+        numresist += np.sum(vals)
+        x = round(100 * np.mean(vals))
+        color = mappable.to_rgba(x)
+        try:
+            cm.drawcountry(country, color=color, **country_kwargs)
+        except ValueError:
+            warn("country '%s' not found!" % country)
+
+    print("total number of sequences resistant: %d" % numresist)
+
+    # re-fade enclaves we've not sampled
+    for country in enclaves:
+        if country not in countrydata:
+            try:
+                cm.drawcountry(country, color='#F5F5F5', **country_kwargs)
+            except:
+                pass
+
+    cbar = plt.colorbar(
+        mappable,
+        aspect=50,
+        orientation='horizontal',
+        pad=0.,
+        shrink=0.8,
+        ticks=[0, 100]
+    )
+    cbar.set_ticks([0, 25, 50, 75, 100])
+    cbar.ax.set_xticklabels(['susceptible', '25%', '50%', '75%', 'resistant'])
+
+#     for tick in cbar.ax.get_xticklines():
+#         tick.set_linewidth(0.)
+
+    cbar.outline.set_linewidth(0.5)
+
+    extra_artists = [cbar.ax]
+
+    plt.savefig(
+        pdffile,
+        format='pdf',
+        bbox_inches='tight',
+        bbox_extra_artists=extra_artists,
+        pad_inches=0.,
+        transparent=True
+    )
+
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main())

@@ -11,7 +11,13 @@ countries = []
 
 min = (vals) ->
     if vals.length > 0
-        vals.reduce( ((a, b) -> if b < a then b else a), 100 )
+        rs = vals[0]
+        if vals.length > 1
+            rs = rs[0...rs.length]
+            for vs in vals[1...vals.length]
+                for v, i in vs
+                    rs[i] = if v < rs[i] then v else rs[i]
+        Math.round( 100 * rs.reduce( ((a, b) -> a + b ), 0 ) / rs.length )
     else
         0
 
